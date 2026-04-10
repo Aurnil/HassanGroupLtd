@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Hassan Group Limited — Sovereign Infrastructure</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400..900&family=Geist+Mono:wght@100..900&display=swap" rel="stylesheet"/>
+
+<!-- GSAP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+<style>
+/* ================================================================
+   ROOT & THEME
+================================================================ */
+:root {
+  --obsidian: #050505;
+  --aluminum: #F0F0F0;
+  --accent: #C8A96E;
+  --accent2: #4A7FA5;
+  --glass-bg: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.08);
+  --text-primary: #F0F0F0;
+  --text-secondary: rgba(240,240,240,0.5);
+  --transition-speed: 0.8s;
+  --cursor-x: 50vw;
+  --cursor-y: 50vh;
+}
+[data-theme="light"] {
+  --glass-bg: rgba(0,0,0,0.04);
+  --glass-border: rgba(0,0,0,0.1);
+  --text-primary: #050505;
+  --text-secondary: rgba(5,5,5,0.5);
+  --accent: #8B6914;
+  --accent2: #1A4F75;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--obsidian);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* ================================================================
+   CUSTOM CURSOR
+================================================================ */
+#cursor-ring {
+  position: fixed;
+  width: 36px; height: 36px;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s, height 0.3s, border-color 0.3s, background 0.3s;
+  mix-blend-mode: difference;
+}
+#cursor-dot {
+  position: fixed;
+  width: 5px; height: 5px;
+  background: var(--accent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+}
+body.cursor-magnetic #cursor-ring {
+  width: 60px; height: 60px;
+  background: rgba(200,169,110,0.1);
+}
+
+/* ================================================================
+   SHADER CANVAS
+================================================================ */
+#shader-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw; height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-speed);
+}
+
+/* ================================================================
+   SCANNING LINE (Vanguard)
+================================================================ */
+#scan-line {
+  position: fixed;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(200,169,110,0.8), rgba(200,169,110,1), rgba(200,169,110,0.8), transparent);
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: 0 0 30px 8px rgba(200,169,110,0.4), 0 0 60px 16px rgba(200,169,110,0.15);
+}
+
+/* ================================================================
+   MAIN LAYOUT
+================================================================ */
+#app {
+  position: relative;
+  z-index: 1;
+}
+
+/* NAV */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 4rem;
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  background: var(--glass-bg);
+  border-bottom: 1px solid var(--glass-border);
+}
+.nav-logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 900;
+  font-size: 1.15rem;
+  letter-spacing: -0.05em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+.nav-logo span { color: var(--accent); }
+.nav-links {
+  display: flex;
+  gap: 3rem;
+  list-style: none;
+}
+.nav-links a {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.3s;
+  font-variation-settings: 'wght' 400;
+}
+.nav-links a:hover { color: var(--accent); font-variation-settings: 'wght' 700; }
+.nav-controls { display: flex; align-items: center; gap: 1.5rem; }
+
+/* THEME TOGGLE */
+#theme-toggle {
+  position: relative;
+  width: 52px; height: 26px;
+  background: var(--glass-border);
+  border: 1px solid var(--glass-border);
+  border-radius: 13px;
+  cursor: none;
+  transition: background 0.4s;
+  outline: none;
+}
+#theme-toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+[data-theme="light"] #theme-toggle::after { transform: translateX(26px); }
+.toggle-label {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+/* ================================================================
+   HERO
+================================================================ */
+#hero {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  align-items: center;
+  padding: 0 4rem;
+  padding-top: 8rem;
+  gap: 0 1.5rem;
+}
+.hero-content {
+  grid-column: 1 / 9;
+  position: relative;
+}
+.hero-eyebrow {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  opacity: 0;
+}
+.hero-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 900;
+  font-size: clamp(3.5rem, 7vw, 8rem);
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  opacity: 0;
+  transform: translateY(60px);
+}
+.hero-title .line-accent { color: var(--accent); }
+.hero-sub {
+  margin-top: 2.5rem;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 300;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  max-width: 42ch;
+  opacity: 0;
+  letter-spacing: 0.02em;
+}
+.hero-stats {
+  grid-column: 10 / 13;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+.stat-card {
+  padding: 1.5rem;
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 2px;
+  opacity: 0;
+  transform: translateX(40px);
+}
+.stat-number {
+  font-family: 'Syne', sans-serif;
+  font-weight: 900;
+  font-size: 2.5rem;
+  letter-spacing: -0.05em;
+  color: var(--accent);
+  line-height: 1;
+}
+.stat-label {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-top: 0.4rem;
+}
+.hero-ctas {
+  display: flex;
+  gap: 1.2rem;
+  margin-top: 3rem;
+  opacity: 0;
+}
+
+/* ================================================================
+   MAGNETIC BUTTONS
+================================================================ */
+.btn-magnetic {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  text-decoration: none;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  background: var(--glass-bg);
+  cursor: none;
+  transition: border-color 0.3s, background 0.3s;
+  overflow: hidden;
+  font-variation-settings: 'wght' 400;
+}
+.btn-magnetic.primary {
+  background: var(--accent);
+  color: var(--obsidian);
+  border-color: var(--accent);
+  font-variation-settings: 'wght' 700;
+}
+.btn-magnetic::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(200,169,110,0.12);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+.btn-magnetic:hover::before { transform: scaleX(1); }
+.btn-inner { position: relative; z-index: 1; display: flex; align-items: center; gap: 0.75rem; }
+
+/* ================================================================
+   SECTION COMMON
+================================================================ */
+section {
+  padding: 8rem 4rem;
+  position: relative;
+}
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0 1.5rem;
+}
+.section-eyebrow {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 900;
+  font-size: clamp(2.5rem, 5vw, 5rem);
+  letter-spacing: -0.05em;
+  line-height: 0.95;
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+.section-body {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.8rem;
+  line-height: 1.9;
+  color: var(--text-secondary);
+  letter-spacing: 0.01em;
+}
+.glass-card {
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 2px;
+  overflow: hidden;
+  transition: border-color 0.4s, background 0.4s;
+}
+.glass-card:hover { border-color: rgba(200,169,110,0.3); }
+
+/* ================================================================
+   SUBSIDIARIES HEADER
+================================================================ */
+#subsidiaries {
+  padding-top: 4rem;
+}
+.subsidiaries-header {
+  grid-column: 1 / 7;
+  margin-bottom: 5rem;
+}
+
+/* ================================================================
+   BLUNOV TECH — Neural Network
+================================================================ */
+#blunov-tech {
+  padding: 6rem 4rem;
+  position: relative;
+  overflow: hidden;
+}
+#neural-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  opacity: 0.6;
+}
+.blunov-tech-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0 1.5rem;
+  position: relative;
+  z-index: 2;
+}
+.blunov-tech-header { grid-column: 1 / 6; }
+.blunov-tech-features {
+  grid-column: 7 / 13;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-content: start;
+}
+.feature-chip {
+  padding: 1.2rem 1.5rem;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  background: var(--glass-bg);
+  transition: color 0.3s, border-color 0.3s;
+}
+.feature-chip:hover { color: var(--accent); border-color: rgba(200,169,110,0.4); }
+.feature-chip .chip-icon {
+  font-size: 1.2rem;
+  display: block;
+  margin-bottom: 0.75rem;
+  color: var(--accent);
+}
+
+/* ================================================================
+   BLUNOV STUDIOS — Horizontal Scrub Gallery
+================================================================ */
+#blunov-studios {
+  padding: 6rem 0 6rem 4rem;
+  overflow: hidden;
+}
+.studios-intro {
+  padding-right: 4rem;
+  margin-bottom: 4rem;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0 1.5rem;
+}
+.studios-intro-content { grid-column: 1 / 8; }
+.gallery-track-wrapper {
+  position: relative;
+  overflow: hidden;
+  padding: 2rem 0;
+}
+.gallery-track {
+  display: flex;
+  gap: 2rem;
+  padding-right: 4rem;
+  will-change: transform;
+}
+.gallery-item {
+  flex: 0 0 420px;
+  height: 280px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  border-radius: 2px;
+  cursor: none;
+}
+.gallery-item canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.gallery-item-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(5,5,5,0.9) 0%, transparent 60%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1.5rem;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.gallery-item:hover .gallery-item-overlay { opacity: 1; }
+.gallery-item-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 900;
+  font-size: 1.1rem;
+  letter-spacing: -0.03em;
+  color: #F0F0F0;
+}
+.gallery-item-tag {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-top: 0.3rem;
+}
+.gallery-scroll-hint {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-right: 4rem;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.scroll-hint-line {
+  flex: 1;
+  height: 1px;
+  background: var(--glass-border);
+  max-width: 200px;
+}
+
+/* ================================================================
+   VANGUARD TACTICAL
+================================================================ */
+#vanguard-tactical {
+  padding: 6rem 4rem;
+  position: relative;
+}
+.tactical-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2rem 1.5rem;
+}
+.tactical-header { grid-column: 1 / 6; }
+.tactical-visual {
+  grid-column: 7 / 13;
+  position: relative;
+  height: 380px;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  background: var(--glass-bg);
+  overflow: hidden;
+  border-radius: 2px;
+}
+.tactical-hud {
+  position: absolute;
+  inset: 0;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.hud-top, .hud-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.hud-label {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.hud-value {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+}
+.hud-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+.hud-reticle {
+  width: 120px; height: 120px;
+  border: 1px solid rgba(200,169,110,0.3);
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: reticle-spin 20s linear infinite;
+}
+@keyframes reticle-spin { to { transform: rotate(360deg); } }
+.hud-reticle::before, .hud-reticle::after {
+  content: '';
+  position: absolute;
+  background: rgba(200,169,110,0.4);
+}
+.hud-reticle::before { width: 1px; height: 100%; }
+.hud-reticle::after { width: 100%; height: 1px; }
+.reticle-inner {
+  width: 60px; height: 60px;
+  border: 1px solid rgba(200,169,110,0.5);
+  border-radius: 50%;
+  animation: reticle-spin 10s linear infinite reverse;
+}
+.tactical-specs {
+  grid-column: 1 / 13;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-border);
+  margin-top: 1rem;
+}
+.spec-item {
+  padding: 1.5rem;
+  background: var(--obsidian);
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+}
+[data-theme="light"] .spec-item { background: var(--aluminum); }
+.spec-key {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+.spec-val {
+  font-family: 'Syne', sans-serif;
+  font-weight: 900;
+  font-size: 1.2rem;
+  letter-spacing: -0.04em;
+  color: var(--accent);
+}
+
+/* ================================================================
+   VANGUARD DAILY — 3D Z-AXIS TICKER
+================================================================ */
+#vanguard-daily {
+  padding: 6rem 4rem;
+  position: relative;
+  overflow: hidden;
+}
+.daily-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0 1.5rem;
+  margin-bottom: 4rem;
+}
+.daily-header { grid-column: 1 / 7; }
+.daily-meta { grid-column: 8 / 13; padding-top: 1rem; }
+.ticker-stage {
+  position: relative;
+  height: 160px;
+  perspective: 800px;
+  overflow: hidden;
+  border-top: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+}
+.ticker-track {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  will-change: transform;
+  white-space: nowrap;
+}
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 0 3rem;
+  font-family: 'Syne', sans-serif;
+  font-weight: 900;
+  font-size: clamp(1.8rem, 4vw, 3.5rem);
+  letter-spacing: -0.04em;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform-style: preserve-3d;
+}
+.ticker-item .t-sep {
+  color: var(--accent);
+  font-size: 0.8em;
+  font-weight: 400;
+}
+.ticker-item .t-tag {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  color: var(--text-secondary);
+  vertical-align: middle;
+  transform: translateZ(20px);
+  display: inline-block;
+}
+
+/* ================================================================
+   FOOTER
+================================================================ */
+footer {
+  padding: 4rem;
+  border-top: 1px solid var(--glass-border);
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 2rem 1.5rem;
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  background: var(--glass-bg);
+}
+.footer-brand { grid-column: 1 / 4; }
+.footer-logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 900;
+  font-size: 1.4rem;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+.footer-logo span { color: var(--accent); }
+.footer-copy {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+.footer-col { grid-column: span 2; }
+.footer-col-title {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1.2rem;
+}
+.footer-col ul { list-style: none; }
+.footer-col ul li {
+  margin-bottom: 0.7rem;
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  cursor: none;
+  transition: color 0.3s;
+  font-variation-settings: 'wght' 400;
+}
+.footer-col ul li:hover { color: var(--text-primary); font-variation-settings: 'wght' 700; }
+.footer-bottom {
+  grid-column: 1 / 13;
+  border-top: 1px solid var(--glass-border);
+  padding-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.footer-bottom-text {
+  font-family: 'Geist Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* ================================================================
+   DIVIDER
+================================================================ */
+.divider {
+  width: 100%;
+  height: 1px;
+  background: var(--glass-border);
+  position: relative;
+  overflow: hidden;
+}
+.divider::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -20%;
+  width: 20%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: divider-sweep 3s ease-in-out infinite;
+}
+@keyframes divider-sweep { 0% { left: -20%; } 100% { left: 120%; } }
+
+/* ================================================================
+   SCROLL PROGRESS
+================================================================ */
+#scroll-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  background: var(--accent);
+  z-index: 9998;
+  transform-origin: left;
+  transform: scaleX(0);
+  box-shadow: 0 0 10px var(--accent);
+}
+
+/* ================================================================
+   REVEAL ANIMATIONS
+================================================================ */
+.reveal { opacity: 0; transform: translateY(40px); }
+.reveal.revealed { opacity: 1; transform: translateY(0); transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.16,1,0.3,1); }
+
+/* ================================================================
+   LIGHT THEME BODY
+================================================================ */
+[data-theme="light"] body { background: var(--aluminum); }
+[data-theme="light"] #shader-canvas { opacity: 0.35; }
+
+/* ================================================================
+   SELECTION
+================================================================ */
+::selection { background: var(--accent); color: var(--obsidian); }
+
+/* ================================================================
+   SCROLLBAR
+================================================================ */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- SCAN LINE -->
+<div id="scan-line"></div>
+
+<!-- SCROLL PROGRESS -->
+<div id="scroll-progress"></div>
+
+<!-- CUSTOM CURSOR -->
+<div id="cursor-ring"></div>
+<div id="cursor-dot"></div>
+
+<!-- SHADER CANVAS -->
+<canvas id="shader-canvas"></canvas>
+
+<!-- NEURAL CANVAS (Blunov Tech) -->
+<canvas id="neural-canvas"></canvas>
+
+<div id="app">
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">Hassan<span>.</span>Group</div>
+    <ul class="nav-links">
+      <li><a href="#subsidiaries">Subsidiaries</a></li>
+      <li><a href="#blunov-tech">Blunov Tech</a></li>
+      <li><a href="#vanguard-tactical">Vanguard</a></li>
+      <li><a href="#vanguard-daily">Daily</a></li>
+    </ul>
+    <div class="nav-controls">
+      <span class="toggle-label" id="theme-label">OBSIDIAN</span>
+      <button id="theme-toggle" aria-label="Toggle theme"></button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-content">
+      <p class="hero-eyebrow">// Sovereign Infrastructure — Est. 2019</p>
+      <h1 class="hero-title">
+        Hassan<br/>
+        <span class="line-accent">Group</span><br/>
+        Limited
+      </h1>
+      <p class="hero-sub">A sovereign holding architecture spanning deep-tech, tactical intelligence, creative production, and lifestyle verticals. Built for permanence. Engineered for dominance.</p>
+      <div class="hero-ctas">
+        <a href="#subsidiaries" class="btn-magnetic primary">
+          <span class="btn-inner">Explore Portfolio →</span>
+        </a>
+        <a href="#" class="btn-magnetic">
+          <span class="btn-inner">Investor Relations</span>
+        </a>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-card">
+        <div class="stat-number">4</div>
+        <div class="stat-label">// Active Subsidiaries</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">∞</div>
+        <div class="stat-label">// Operational Scope</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">01</div>
+        <div class="stat-label">// Chain of Command</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- SUBSIDIARIES HEADER -->
+  <section id="subsidiaries">
+    <div class="section-grid">
+      <div class="subsidiaries-header reveal">
+        <p class="section-eyebrow">// Portfolio Architecture</p>
+        <h2 class="section-title">Four<br/>Pillars</h2>
+      </div>
+    </div>
+  </section>
+
+  <!-- BLUNOV TECH -->
+  <section id="blunov-tech">
+    <div class="blunov-tech-grid">
+      <div class="blunov-tech-header reveal">
+        <p class="section-eyebrow">// BLU-001 | Deep Technology</p>
+        <h2 class="section-title" style="margin-bottom:1.5rem;">Blunov<br/>Tech</h2>
+        <p class="section-body" style="max-width:38ch;">Advanced computational infrastructure. Neural-mesh architectures designed for sovereign-grade reliability. Where silicon meets strategy.</p>
+        <div style="margin-top:2.5rem;">
+          <a href="#" class="btn-magnetic" style="display:inline-flex;">
+            <span class="btn-inner">Access Division →</span>
+          </a>
+        </div>
+      </div>
+      <div class="blunov-tech-features reveal">
+        <div class="feature-chip">
+          <span class="chip-icon">◈</span>
+          Neural Infrastructure
+        </div>
+        <div class="feature-chip">
+          <span class="chip-icon">◎</span>
+          Quantum Compute
+        </div>
+        <div class="feature-chip">
+          <span class="chip-icon">⬡</span>
+          Sovereign Cloud
+        </div>
+        <div class="feature-chip">
+          <span class="chip-icon">◇</span>
+          Edge Fabric
+        </div>
+        <div class="feature-chip" style="grid-column: span 2;">
+          <span class="chip-icon">⬢</span>
+          Distributed AI Model Serving — Zero-trust architecture, sub-10ms latency
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- BLUNOV STUDIOS -->
+  <section id="blunov-studios">
+    <div class="studios-intro">
+      <div class="studios-intro-content reveal">
+        <p class="section-eyebrow">// BLU-002 | Creative Production</p>
+        <h2 class="section-title">Blunov<br/>Studios</h2>
+      </div>
+      <div style="grid-column: 8/13; padding-top:1rem;" class="reveal">
+        <p class="section-body">Full-spectrum creative production. Cinematic experiences, immersive installations, and branded content at the intersection of art and computation.</p>
+      </div>
+    </div>
+    <div class="gallery-track-wrapper" id="gallery-wrapper">
+      <div class="gallery-track" id="gallery-track">
+        <!-- Cylinder-distortion canvases injected by JS -->
+      </div>
+    </div>
+    <div class="gallery-scroll-hint" style="padding-right:4rem; margin-top:1.5rem;">
+      <span>Drag to explore</span>
+      <div class="scroll-hint-line"></div>
+      <span>12 projects</span>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- VANGUARD TACTICAL -->
+  <section id="vanguard-tactical">
+    <div class="tactical-grid">
+      <div class="tactical-header reveal">
+        <p class="section-eyebrow">// VGD-001 | Tactical Systems</p>
+        <h2 class="section-title">Vanguard<br/>Tactical</h2>
+        <p class="section-body" style="margin-top:1.5rem; max-width:38ch;">Mission-critical systems engineering. Precision hardware, field-hardened software, and intelligence architecture for operators who cannot afford to fail.</p>
+        <div style="margin-top:2.5rem;">
+          <a href="#" class="btn-magnetic" style="display:inline-flex;">
+            <span class="btn-inner">Classified Briefing →</span>
+          </a>
+        </div>
+      </div>
+      <div class="tactical-visual reveal">
+        <div class="tactical-hud">
+          <div class="hud-top">
+            <div>
+              <div class="hud-label">System Status</div>
+              <div class="hud-value" id="hud-status">OPERATIONAL</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="hud-label">Uptime</div>
+              <div class="hud-value" id="hud-uptime">99.997%</div>
+            </div>
+          </div>
+          <div class="hud-center">
+            <div class="hud-reticle">
+              <div class="reticle-inner"></div>
+            </div>
+          </div>
+          <div class="hud-bottom">
+            <div>
+              <div class="hud-label">Sector</div>
+              <div class="hud-value">VANGUARD-ALPHA</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="hud-label">Encryption</div>
+              <div class="hud-value">AES-512 / ACTIVE</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tactical-specs reveal">
+        <div class="spec-item">
+          <div class="spec-key">Response Time</div>
+          <div class="spec-val">&lt; 4ms</div>
+        </div>
+        <div class="spec-item">
+          <div class="spec-key">Redundancy Layers</div>
+          <div class="spec-val">7×</div>
+        </div>
+        <div class="spec-item">
+          <div class="spec-key">Threat Detection</div>
+          <div class="spec-val">99.99%</div>
+        </div>
+        <div class="spec-item">
+          <div class="spec-key">Deployment Zones</div>
+          <div class="spec-val">Global</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- VANGUARD DAILY -->
+  <section id="vanguard-daily">
+    <div class="daily-grid">
+      <div class="daily-header reveal">
+        <p class="section-eyebrow">// VGD-002 | Lifestyle & Media</p>
+        <h2 class="section-title">Vanguard<br/>Daily</h2>
+      </div>
+      <div class="daily-meta reveal">
+        <p class="section-body">The sovereign voice. Premium editorial, curated intelligence briefings, and lifestyle content for those who operate at the frontier. No noise. Signal only.</p>
+        <div style="margin-top:2rem;">
+          <a href="#" class="btn-magnetic" style="display:inline-flex;">
+            <span class="btn-inner">Subscribe →</span>
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="ticker-stage" id="ticker-stage">
+      <div class="ticker-track" id="ticker-track">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-brand">
+      <div class="footer-logo">Hassan<span>.</span>Group</div>
+      <p class="footer-copy">Sovereign-class holding infrastructure.<br/>Built for permanence. Engineered for dominance.<br/>© 2024 Hassan Group Limited. All rights reserved.</p>
+    </div>
+    <div class="footer-col" style="grid-column:5/7">
+      <div class="footer-col-title">// Blunov</div>
+      <ul>
+        <li>Blunov Tech</li>
+        <li>Blunov Studios</li>
+        <li>Research Lab</li>
+        <li>Open Source</li>
+      </ul>
+    </div>
+    <div class="footer-col" style="grid-column:7/9">
+      <div class="footer-col-title">// Vanguard</div>
+      <ul>
+        <li>Vanguard Tactical</li>
+        <li>Vanguard Daily</li>
+        <li>Intelligence Briefs</li>
+        <li>Field Operations</li>
+      </ul>
+    </div>
+    <div class="footer-col" style="grid-column:9/11">
+      <div class="footer-col-title">// Group</div>
+      <ul>
+        <li>About Hassan Group</li>
+        <li>Investor Relations</li>
+        <li>Careers</li>
+        <li>Press</li>
+      </ul>
+    </div>
+    <div class="footer-col" style="grid-column:11/13">
+      <div class="footer-col-title">// Legal</div>
+      <ul>
+        <li>Privacy Policy</li>
+        <li>Terms of Service</li>
+        <li>Compliance</li>
+        <li>Security</li>
+      </ul>
+    </div>
+    <div class="footer-bottom">
+      <span class="footer-bottom-text">// Hassan Group Limited — Sovereign Infrastructure</span>
+      <span class="footer-bottom-text">Classified: INTERNAL USE ONLY</span>
+    </div>
+  </footer>
+
+</div><!-- #app -->
+
+<script>
+/* ================================================================
+   MASTER CONTROLLER
+================================================================ */
+(function() {
+  'use strict';
+
+  // ── State ──────────────────────────────────────────────────────
+  const state = {
+    mouse: { x: 0.5, y: 0.5, rawX: window.innerWidth/2, rawY: window.innerHeight/2 },
+    scrollY: 0,
+    lastScrollY: 0,
+    scrollVelocity: 0,
+    isDark: true,
+    time: 0,
+    raf: null,
+    theme: 'dark',
+    cursorX: window.innerWidth/2,
+    cursorY: window.innerHeight/2,
+    ringX: window.innerWidth/2,
+    ringY: window.innerHeight/2,
+  };
+
+  // ── GSAP register ─────────────────────────────────────────────
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* ==============================================================
+     1. FRAGMENT SHADER — fBM Liquid Smoke
+  ============================================================== */
+  const canvas = document.getElementById('shader-canvas');
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+  if (gl) {
+    const VS = `
+      attribute vec2 a_position;
+      void main() {
+        gl_Position = vec4(a_position, 0.0, 1.0);
+      }
+    `;
+
+    // Full fBM liquid smoke shader
+    const FS = `
+      precision highp float;
+      uniform float u_time;
+      uniform vec2 u_resolution;
+      uniform vec2 u_mouse;
+      uniform float u_turbulence;
+      uniform vec3 u_col_a;
+      uniform vec3 u_col_b;
+      uniform vec3 u_col_c;
+
+      // Hash function
+      vec2 hash2(vec2 p) {
+        p = vec2(dot(p,vec2(127.1,311.7)), dot(p,vec2(269.5,183.3)));
+        return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
+      }
+
+      // Gradient noise
+      float gnoise(vec2 p) {
+        vec2 i = floor(p);
+        vec2 f = fract(p);
+        vec2 u = f*f*(3.0-2.0*f);
+        return mix(mix(dot(hash2(i+vec2(0,0)),f-vec2(0,0)),
+                       dot(hash2(i+vec2(1,0)),f-vec2(1,0)),u.x),
+                   mix(dot(hash2(i+vec2(0,1)),f-vec2(0,1)),
+                       dot(hash2(i+vec2(1,1)),f-vec2(1,1)),u.x),u.y);
+      }
+
+      // fBM — Fractional Brownian Motion (6 octaves)
+      float fbm(vec2 p) {
+        float val = 0.0;
+        float amp = 0.5;
+        float freq = 1.0;
+        mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
+        for (int i = 0; i < 6; i++) {
+          val += amp * gnoise(p * freq);
+          p = rot * p;
+          freq *= 2.17;
+          amp *= 0.485;
+        }
+        return val;
+      }
+
+      // Domain-warped fBM for liquid smoke
+      float smokeFbm(vec2 p, float t, float turb) {
+        vec2 warp1 = vec2(
+          fbm(p + vec2(t * 0.13, t * 0.07)),
+          fbm(p + vec2(t * 0.07, t * 0.11))
+        );
+        vec2 warp2 = vec2(
+          fbm(p + 3.0*warp1 + vec2(1.7 + t*0.05, 9.2)),
+          fbm(p + 3.0*warp1 + vec2(8.3 + t*0.04, 2.8))
+        );
+        // Turbulence from scroll velocity
+        float extraWarp = turb * 2.5;
+        vec2 mouseInfluence = (vec2(p) - (u_mouse * 2.0 - 1.0) * vec2(1.0, -1.0)) * 0.8;
+        float mouseDist = length(mouseInfluence);
+        float mouseEffect = exp(-mouseDist * 1.5) * 0.4;
+        return fbm(p + 2.5*warp2 + mouseEffect + vec2(extraWarp * sin(t * 0.3)));
+      }
+
+      void main() {
+        vec2 uv = gl_FragCoord.xy / u_resolution;
+        vec2 p = (uv - 0.5) * 2.5;
+        p.y *= u_resolution.y / u_resolution.x;
+
+        float t = u_time * 0.18;
+        float smoke = smokeFbm(p, t, u_turbulence);
+
+        // Map smoke to 3-tone gradient
+        float n = smoke * 0.5 + 0.5;
+        vec3 col = mix(u_col_a, u_col_b, smoothstep(0.0, 0.5, n));
+        col = mix(col, u_col_c, smoothstep(0.5, 1.0, n));
+
+        // Vignette
+        float vig = 1.0 - dot(uv - 0.5, (uv - 0.5) * 2.5);
+        col *= vig;
+
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `;
+
+    function compileShader(type, src) {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      return s;
+    }
+
+    const prog = gl.createProgram();
+    gl.attachShader(prog, compileShader(gl.VERTEX_SHADER, VS));
+    gl.attachShader(prog, compileShader(gl.FRAGMENT_SHADER, FS));
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
+
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'a_position');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    const uniforms = {
+      time: gl.getUniformLocation(prog, 'u_time'),
+      res: gl.getUniformLocation(prog, 'u_resolution'),
+      mouse: gl.getUniformLocation(prog, 'u_mouse'),
+      turb: gl.getUniformLocation(prog, 'u_turbulence'),
+      colA: gl.getUniformLocation(prog, 'u_col_a'),
+      colB: gl.getUniformLocation(prog, 'u_col_b'),
+      colC: gl.getUniformLocation(prog, 'u_col_c'),
+    };
+
+    // Theme color palettes
+    const palettes = {
+      dark: {
+        a: [0.02, 0.02, 0.03],
+        b: [0.06, 0.05, 0.08],
+        c: [0.12, 0.10, 0.15]
+      },
+      light: {
+        a: [0.88, 0.88, 0.90],
+        b: [0.92, 0.91, 0.95],
+        c: [0.97, 0.96, 0.99]
+      }
+    };
+    let currentPalette = { ...palettes.dark };
+
+    function resizeShader() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      gl.viewport(0, 0, canvas.width, canvas.height);
+    }
+    resizeShader();
+    window.addEventListener('resize', resizeShader);
+
+    function renderShader(ts) {
+      state.time = ts * 0.001;
+      const turbThreshold = 3.0;
+      const turb = Math.min(Math.abs(state.scrollVelocity) / turbThreshold, 1.0);
+
+      gl.uniform1f(uniforms.time, state.time);
+      gl.uniform2f(uniforms.res, canvas.width, canvas.height);
+      gl.uniform2f(uniforms.mouse, state.mouse.x, state.mouse.y);
+      gl.uniform1f(uniforms.turb, turb);
+      gl.uniform3f(uniforms.colA, currentPalette.a[0], currentPalette.a[1], currentPalette.a[2]);
+      gl.uniform3f(uniforms.colB, currentPalette.b[0], currentPalette.b[1], currentPalette.b[2]);
+      gl.uniform3f(uniforms.colC, currentPalette.c[0], currentPalette.c[1], currentPalette.c[2]);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+
+    // Theme palette transition via GSAP
+    window.shiftPalette = function(theme) {
+      const target = palettes[theme];
+      const proxy = {
+        a0: currentPalette.a[0], a1: currentPalette.a[1], a2: currentPalette.a[2],
+        b0: currentPalette.b[0], b1: currentPalette.b[1], b2: currentPalette.b[2],
+        c0: currentPalette.c[0], c1: currentPalette.c[1], c2: currentPalette.c[2],
+      };
+      gsap.to(proxy, {
+        a0: target.a[0], a1: target.a[1], a2: target.a[2],
+        b0: target.b[0], b1: target.b[1], b2: target.b[2],
+        c0: target.c[0], c1: target.c[1], c2: target.c[2],
+        duration: 1.4,
+        ease: 'power2.inOut',
+        onUpdate: () => {
+          currentPalette.a = [proxy.a0, proxy.a1, proxy.a2];
+          currentPalette.b = [proxy.b0, proxy.b1, proxy.b2];
+          currentPalette.c = [proxy.c0, proxy.c1, proxy.c2];
+        }
+      });
+    };
+
+    window._renderShader = renderShader;
+  }
+
+  /* ==============================================================
+     2. NEURAL NETWORK — Blunov Tech
+  ============================================================== */
+  const neuralCanvas = document.getElementById('neural-canvas');
+
+  function initNeural() {
+    const section = document.getElementById('blunov-tech');
+    const rect = section.getBoundingClientRect();
+    neuralCanvas.style.position = 'absolute';
+    neuralCanvas.style.top = section.offsetTop + 'px';
+    neuralCanvas.style.left = '0';
+    neuralCanvas.style.width = '100%';
+    neuralCanvas.style.height = section.offsetHeight + 'px';
+    neuralCanvas.style.zIndex = '1';
+    neuralCanvas.style.pointerEvents = 'none';
+    neuralCanvas.width = window.innerWidth;
+    neuralCanvas.height = section.offsetHeight;
+
+    const ctx = neuralCanvas.getContext('2d');
+    const nodes = [];
+    const NODE_COUNT = 60;
+
+    for (let i = 0; i < NODE_COUNT; i++) {
+      nodes.push({
+        x: Math.random() * neuralCanvas.width,
+        y: Math.random() * neuralCanvas.height,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4,
+        r: Math.random() * 2 + 1
+      });
+    }
+
+    function drawNeural(ts) {
+      ctx.clearRect(0, 0, neuralCanvas.width, neuralCanvas.height);
+      const sectionTop = section.offsetTop;
+      const mx = state.mouse.rawX;
+      const my = state.mouse.rawY - sectionTop + window.scrollY;
+      const CONNECT_DIST = 140;
+      const MOUSE_DIST = 180;
+
+      // Update nodes
+      nodes.forEach(n => {
+        n.x += n.vx;
+        n.y += n.vy;
+        if (n.x < 0 || n.x > neuralCanvas.width) n.vx *= -1;
+        if (n.y < 0 || n.y > neuralCanvas.height) n.vy *= -1;
+
+        // Mouse repulsion
+        const dx = n.x - mx, dy = n.y - my;
+        const d = Math.sqrt(dx*dx + dy*dy);
+        if (d < MOUSE_DIST) {
+          const force = (MOUSE_DIST - d) / MOUSE_DIST * 0.8;
+          n.vx += (dx / d) * force * 0.3;
+          n.vy += (dy / d) * force * 0.3;
+          // Clamp velocity
+          const speed = Math.sqrt(n.vx*n.vx + n.vy*n.vy);
+          if (speed > 2.5) { n.vx = (n.vx/speed)*2.5; n.vy = (n.vy/speed)*2.5; }
+        }
+      });
+
+      const accent = state.isDark ? '200,169,110' : '139,105,20';
+      const nodeColor = state.isDark ? '200,169,110' : '74,127,165';
+
+      // Draw connections
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i+1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
+          const d = Math.sqrt(dx*dx+dy*dy);
+          if (d < CONNECT_DIST) {
+            const alpha = (1 - d/CONNECT_DIST) * 0.35;
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(${accent},${alpha})`;
+            ctx.lineWidth = 0.7;
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.stroke();
+          }
+        }
+        // Mouse connections
+        const dx = nodes[i].x - mx, dy = nodes[i].y - my;
+        const d = Math.sqrt(dx*dx+dy*dy);
+        if (d < MOUSE_DIST) {
+          const alpha = (1 - d/MOUSE_DIST) * 0.7;
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(${accent},${alpha})`;
+          ctx.lineWidth = 1.2;
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(mx, my);
+          ctx.stroke();
+        }
+      }
+
+      // Draw nodes
+      nodes.forEach(n => {
+        const dx = n.x - mx, dy = n.y - my;
+        const d = Math.sqrt(dx*dx+dy*dy);
+        const brightBoost = d < MOUSE_DIST ? (1 - d/MOUSE_DIST) * 0.6 : 0;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.r + brightBoost*3, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(${nodeColor},${0.5+brightBoost})`;
+        ctx.fill();
+      });
+    }
+    return drawNeural;
+  }
+  const drawNeural = initNeural();
+
+  /* ==============================================================
+     3. GALLERY — Cylinder Distortion (Blunov Studios)
+  ============================================================== */
+  const GALLERY_ITEMS = [
+    { title: 'Phantom Rift', tag: 'Immersive Installation', hue: 200, hue2: 260 },
+    { title: 'Null Space', tag: 'Generative Film', hue: 320, hue2: 30 },
+    { title: 'Iron Atlas', tag: 'Brand Identity', hue: 40, hue2: 80 },
+    { title: 'Veil Protocol', tag: 'AR Experience', hue: 180, hue2: 220 },
+    { title: 'Signal/Noise', tag: 'Sound & Vision', hue: 280, hue2: 330 },
+    { title: 'Bastion III', tag: 'Motion Picture', hue: 350, hue2: 20 },
+    { title: 'Liminal State', tag: 'Interactive', hue: 160, hue2: 200 },
+    { title: 'Fracture Line', tag: 'Tactical Branding', hue: 50, hue2: 10 },
+  ];
+
+  const track = document.getElementById('gallery-track');
+  const galleryCanvases = [];
+
+  GALLERY_ITEMS.forEach((item, idx) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'gallery-item';
+
+    const c = document.createElement('canvas');
+    c.width = 420;
+    c.height = 280;
+    wrap.appendChild(c);
+    galleryCanvases.push({ canvas: c, item, phase: Math.random() * Math.PI * 2 });
+
+    const ov = document.createElement('div');
+    ov.className = 'gallery-item-overlay';
+    ov.innerHTML = `<div class="gallery-item-title">${item.title}</div><div class="gallery-item-tag">${item.tag}</div>`;
+    wrap.appendChild(ov);
+    track.appendChild(wrap);
+  });
+
+  function drawCylinderCanvas(entry, ts) {
+    const { canvas, item, phase } = entry;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Draw base gradient
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, `hsl(${item.hue}, 30%, 10%)`);
+    grad.addColorStop(0.5, `hsl(${(item.hue+item.hue2)/2}, 25%, 15%)`);
+    grad.addColorStop(1, `hsl(${item.hue2}, 35%, 8%)`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Cylinder distortion: warp horizontal bands
+    const t = ts * 0.0006 + phase;
+    const COLS = 60;
+    const colW = W / COLS;
+
+    for (let col = 0; col < COLS; col++) {
+      const x = col / COLS; // 0..1
+      // Cylinder angle: center = 0, edges = ±PI/2
+      const angle = (x - 0.5) * Math.PI * 0.9;
+      const cosA = Math.cos(angle);
+      // Map destination x to source x with cylinder mapping
+      const srcX = 0.5 + Math.sin(angle) * 0.4 + Math.sin(t + col*0.12) * 0.015;
+      const srcXPx = srcX * W;
+      const warpY = Math.sin(t * 0.7 + col * 0.2) * 5;
+
+      // Darken edges (cylinder falloff)
+      const brightness = cosA;
+
+      ctx.save();
+      ctx.translate(col * colW, 0);
+      // Draw a vertical slice from source position
+      const sliceGrad = ctx.createLinearGradient(0, 0, colW, 0);
+      const h1 = item.hue + Math.sin(t + col*0.1) * 20;
+      const l1 = 8 + brightness * 25;
+      sliceGrad.addColorStop(0, `hsla(${h1}, 40%, ${l1}%, ${brightness})`);
+      sliceGrad.addColorStop(1, `hsla(${item.hue2}, 35%, ${l1*0.9}%, ${brightness * 0.9})`);
+      ctx.fillStyle = sliceGrad;
+      ctx.fillRect(0, warpY, colW + 1, H);
+      ctx.restore();
+    }
+
+    // Noise grain overlay
+    ctx.save();
+    ctx.globalAlpha = 0.04;
+    for (let i = 0; i < 200; i++) {
+      const gx = Math.random() * W;
+      const gy = Math.random() * H;
+      ctx.fillStyle = Math.random() > 0.5 ? '#fff' : '#000';
+      ctx.fillRect(gx, gy, 1, 1);
+    }
+    ctx.restore();
+
+    // Title overlay subtle glow
+    const glow = ctx.createRadialGradient(W*0.5, H*0.8, 0, W*0.5, H*0.8, W*0.6);
+    glow.addColorStop(0, `hsla(${item.hue}, 60%, 50%, 0.12)`);
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  /* Gallery drag scroll */
+  (function() {
+    const wrapper = document.getElementById('gallery-wrapper');
+    let isDown = false, startX = 0, scrollLeft = 0;
+    let velX = 0, lastX = 0;
+
+    wrapper.addEventListener('mousedown', e => {
+      isDown = true;
+      startX = e.pageX;
+      scrollLeft = wrapper.scrollLeft || 0;
+      lastX = e.pageX;
+      wrapper.style.cursor = 'grabbing';
+    });
+    document.addEventListener('mouseup', () => { isDown = false; wrapper.style.cursor = 'default'; });
+    wrapper.addEventListener('mousemove', e => {
+      if (!isDown) return;
+      e.preventDefault();
+      const dx = e.pageX - startX;
+      track.style.transform = `translateX(${dx + (track._offset||0)}px)`;
+      velX = e.pageX - lastX;
+      lastX = e.pageX;
+    });
+    wrapper.addEventListener('mouseup', () => {
+      track._offset = (track._offset||0) + (parseFloat(track.style.transform.replace('translateX(',''))||0);
+      isDown = false;
+    });
+  })();
+
+  /* ==============================================================
+     4. TICKER — 3D Z-axis (Vanguard Daily)
+  ============================================================== */
+  const tickerItems = [
+    'Sovereign Intelligence', 'Tactical Systems', 'Neural Infrastructure',
+    'Field Operations', 'Zero Latency', 'Signal Over Noise',
+    'Encrypted Channels', 'Global Deployment', 'Vanguard Protocol',
+  ];
+
+  const tickerTrack = document.getElementById('ticker-track');
+  // Duplicate for infinite loop
+  const allItems = [...tickerItems, ...tickerItems, ...tickerItems];
+
+  allItems.forEach((txt, i) => {
+    const el = document.createElement('span');
+    el.className = 'ticker-item';
+    const z = Math.sin(i * 0.6) * 40;
+    const scale = 0.7 + Math.cos(i * 0.4) * 0.3;
+    el.innerHTML = `${txt} <span class="t-sep">◆</span>`;
+    el.style.setProperty('--z', z + 'px');
+    el.dataset.z = z;
+    el.dataset.scale = scale;
+    tickerTrack.appendChild(el);
+  });
+
+  let tickerX = 0;
+  const TICKER_SPEED = 0.8;
+
+  function animateTicker(ts) {
+    tickerX -= TICKER_SPEED + Math.abs(state.scrollVelocity) * 0.3;
+    const trackW = tickerTrack.scrollWidth / 3;
+    if (Math.abs(tickerX) >= trackW) tickerX = 0;
+
+    // 3D Z-axis animation
+    const items = tickerTrack.querySelectorAll('.ticker-item');
+    items.forEach((el, i) => {
+      const z = parseFloat(el.dataset.z) + Math.sin(ts * 0.001 + i * 0.3) * 20;
+      const scale = 0.75 + Math.cos(ts * 0.0008 + i * 0.4) * 0.25;
+      el.style.transform = `translateZ(${z}px) scale(${Math.max(0.5, scale)})`;
+      el.style.opacity = 0.4 + Math.max(0, scale - 0.5) * 1.2;
+    });
+
+    tickerTrack.style.transform = `translateX(${tickerX}px)`;
+  }
+
+  /* ==============================================================
+     5. SCANNING LINE — Vanguard Tactical
+  ============================================================== */
+  const scanLine = document.getElementById('scan-line');
+  let scanY = 0;
+  let scanDirection = 1;
+  const SCAN_SPEED = 1.5;
+  let scanActive = false;
+
+  function animateScanLine() {
+    const section = document.getElementById('vanguard-tactical');
+    const rect = section.getBoundingClientRect();
+    const inView = rect.top < window.innerHeight && rect.bottom > 0;
+    
+    if (inView) {
+      if (!scanActive) {
+        scanActive = true;
+        gsap.to(scanLine, { opacity: 1, duration: 0.3 });
+        scanY = rect.top + window.scrollY;
+      }
+      scanY += SCAN_SPEED * scanDirection;
+      const absBottom = rect.top + window.scrollY + section.offsetHeight;
+      const absTop = rect.top + window.scrollY;
+      if (scanY > absBottom) scanDirection = -1;
+      if (scanY < absTop) scanDirection = 1;
+      const viewY = scanY - window.scrollY;
+      scanLine.style.top = viewY + 'px';
+    } else {
+      if (scanActive) {
+        scanActive = false;
+        gsap.to(scanLine, { opacity: 0, duration: 0.5 });
+      }
+    }
+  }
+
+  /* ==============================================================
+     6. CURSOR — Magnetic Lerp
+  ============================================================== */
+  const ring = document.getElementById('cursor-ring');
+  const dot = document.getElementById('cursor-dot');
+  const LERP = 0.12;
+
+  document.addEventListener('mousemove', e => {
+    state.cursorX = e.clientX;
+    state.cursorY = e.clientY;
+    state.mouse.rawX = e.clientX;
+    state.mouse.rawY = e.clientY;
+    state.mouse.x = e.clientX / window.innerWidth;
+    state.mouse.y = 1.0 - e.clientY / window.innerHeight;
+  });
+
+  function animateCursor() {
+    // Lerp ring
+    state.ringX += (state.cursorX - state.ringX) * LERP;
+    state.ringY += (state.cursorY - state.ringY) * LERP;
+    ring.style.left = state.ringX + 'px';
+    ring.style.top = state.ringY + 'px';
+    dot.style.left = state.cursorX + 'px';
+    dot.style.top = state.cursorY + 'px';
+  }
+
+  /* Magnetic button attraction */
+  document.querySelectorAll('.btn-magnetic').forEach(btn => {
+    btn.addEventListener('mouseenter', () => document.body.classList.add('cursor-magnetic'));
+    btn.addEventListener('mouseleave', () => {
+      document.body.classList.remove('cursor-magnetic');
+      gsap.to(btn.querySelector('.btn-inner'), { x: 0, y: 0, duration: 0.5, ease: 'elastic.out(1,0.4)' });
+    });
+    btn.addEventListener('mousemove', e => {
+      const r = btn.getBoundingClientRect();
+      const cx = r.left + r.width/2;
+      const cy = r.top + r.height/2;
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+      const inner = btn.querySelector('.btn-inner');
+      gsap.to(inner, { x: dx * 0.35, y: dy * 0.35, duration: 0.25, ease: 'power2.out' });
+    });
+  });
+
+  /* Typography morphing on ALL hoverable text items */
+  document.querySelectorAll('.nav-links a, .footer-col ul li, .feature-chip').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      gsap.to(el, { fontVariationSettings: '"wght" 900', duration: 0.25 });
+    });
+    el.addEventListener('mouseleave', () => {
+      gsap.to(el, { fontVariationSettings: '"wght" 400', duration: 0.4 });
+    });
+  });
+
+  /* ==============================================================
+     7. SCROLL — Velocity Tracking + Progress
+  ============================================================== */
+  const scrollProgress = document.getElementById('scroll-progress');
+  let lastScrollTime = performance.now();
+
+  window.addEventListener('scroll', () => {
+    const now = performance.now();
+    const dt = now - lastScrollTime;
+    const dy = window.scrollY - state.lastScrollY;
+    state.scrollVelocity = dt > 0 ? dy / dt * 16 : 0; // pixels per frame (at 60fps)
+    state.lastScrollY = window.scrollY;
+    lastScrollTime = now;
+
+    // Scroll progress bar
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    const prog = window.scrollY / total;
+    gsap.to(scrollProgress, { scaleX: prog, duration: 0.1, ease: 'none' });
+
+    // Decay velocity
+    setTimeout(() => { state.scrollVelocity *= 0.85; }, 50);
+  }, { passive: true });
+
+  /* ==============================================================
+     8. THEME TOGGLE
+  ============================================================== */
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeLabel = document.getElementById('theme-label');
+
+  themeToggle.addEventListener('click', () => {
+    state.isDark = !state.isDark;
+    const theme = state.isDark ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    themeLabel.textContent = state.isDark ? 'OBSIDIAN' : 'ALUMINUM';
+    if (window.shiftPalette) window.shiftPalette(theme);
+    
+    // Subtle page transition
+    gsap.fromTo(document.getElementById('app'), 
+      { opacity: 0.7 },
+      { opacity: 1, duration: 0.6, ease: 'power2.out' }
+    );
+  });
+
+  /* ==============================================================
+     9. SCROLL REVEALS
+  ============================================================== */
+  const reveals = document.querySelectorAll('.reveal');
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+      }
+    });
+  }, { threshold: 0.15 });
+  reveals.forEach(el => revealObserver.observe(el));
+
+  /* ==============================================================
+     10. HERO INTRO ANIMATION
+  ============================================================== */
+  gsap.timeline({ delay: 0.3 })
+    .to('.hero-eyebrow', { opacity: 1, duration: 0.6, ease: 'power2.out' })
+    .to('.hero-title', { opacity: 1, y: 0, duration: 1.1, ease: 'power4.out' }, '-=0.3')
+    .to('.hero-sub', { opacity: 1, duration: 0.7, ease: 'power2.out' }, '-=0.5')
+    .to('.hero-ctas', { opacity: 1, duration: 0.5, ease: 'power2.out' }, '-=0.3')
+    .to('.stat-card', { opacity: 1, x: 0, stagger: 0.15, duration: 0.7, ease: 'power3.out' }, '-=0.8');
+
+  /* ==============================================================
+     11. HUD LIVE DATA
+  ============================================================== */
+  function updateHUD() {
+    const uptime = (99.990 + Math.random() * 0.009).toFixed(3);
+    document.getElementById('hud-uptime').textContent = uptime + '%';
+    const statuses = ['OPERATIONAL', 'NOMINAL', 'ALL SYSTEMS GO'];
+    if (Math.random() > 0.97) {
+      document.getElementById('hud-status').textContent = statuses[Math.floor(Math.random()*statuses.length)];
+    }
+  }
+  setInterval(updateHUD, 2000);
+
+  /* ==============================================================
+     12. MASTER RAF LOOP
+  ============================================================== */
+  let lastTS = 0;
+  function masterLoop(ts) {
+    // Throttle to 60fps
+    if (ts - lastTS < 14) {
+      requestAnimationFrame(masterLoop);
+      return;
+    }
+    lastTS = ts;
+
+    if (window._renderShader) window._renderShader(ts);
+    animateCursor();
+    drawNeural(ts);
+    galleryCanvases.forEach(entry => drawCylinderCanvas(entry, ts));
+    animateTicker(ts);
+    animateScanLine();
+
+    requestAnimationFrame(masterLoop);
+  }
+  requestAnimationFrame(masterLoop);
+
+  /* ==============================================================
+     13. RESIZE HANDLER
+  ============================================================== */
+  window.addEventListener('resize', () => {
+    initNeural();
+  });
+
+})();
+</script>
+</body>
+</html>
