@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hassan Group Limited</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+/* ─── DESIGN TOKENS ──────────────────────────────────────────────── */
+:root {
+  --bg:           #080808;
+  --bg-alt:       #0e0e0e;
+  --surface:      rgba(255,255,255,0.04);
+  --border:       rgba(255,255,255,0.10);
+  --text-primary: #EDEDED;
+  --text-muted:   rgba(237,237,237,0.45);
+  --accent:       #C8B89A;
+  --accent-dim:   rgba(200,184,154,0.18);
+  --shine:        rgba(200,184,154,0.55);
+  --shard-1:      rgba(200,184,154,0.06);
+  --shard-2:      rgba(100,120,160,0.05);
+  --shard-3:      rgba(237,237,237,0.03);
+
+  /* Type scale – major third (x1.25) with clamp() */
+  --t-xs:   clamp(0.64rem,  0.60rem + 0.18vw, 0.72rem);
+  --t-sm:   clamp(0.80rem,  0.75rem + 0.22vw, 0.90rem);
+  --t-base: clamp(1.00rem,  0.94rem + 0.28vw, 1.125rem);
+  --t-md:   clamp(1.25rem,  1.18rem + 0.35vw, 1.40rem);
+  --t-lg:   clamp(1.56rem,  1.45rem + 0.55vw, 1.75rem);
+  --t-xl:   clamp(1.95rem,  1.80rem + 0.75vw, 2.20rem);
+  --t-2xl:  clamp(2.44rem,  2.20rem + 1.10vw, 2.80rem);
+  --t-3xl:  clamp(3.05rem,  2.70rem + 1.60vw, 3.60rem);
+  --t-hero: clamp(3.80rem,  3.20rem + 2.90vw, 6.00rem);
+
+  --easing: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-ui: 0.3s;
+}
+
+[data-theme="light"] {
+  --bg:           #E2E2E2;
+  --bg-alt:       #D8D8D8;
+  --surface:      rgba(0,0,0,0.04);
+  --border:       rgba(0,0,0,0.10);
+  --text-primary: #141414;
+  --text-muted:   rgba(20,20,20,0.45);
+  --accent:       #5A4A35;
+  --accent-dim:   rgba(90,74,53,0.12);
+  --shine:        rgba(90,74,53,0.45);
+  --shard-1:      rgba(90,74,53,0.06);
+  --shard-2:      rgba(60,80,120,0.05);
+  --shard-3:      rgba(20,20,20,0.04);
+}
+
+/* ─── RESET ──────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', sans-serif;
+  font-size: var(--t-base);
+  font-weight: 300;
+  line-height: 1.65;
+  color: var(--text-primary);
+  background: var(--bg);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--dur-ui) var(--easing),
+              color var(--dur-ui) var(--easing);
+}
+
+/* ─── MESH GRADIENT BACKGROUND ──────────────────────────────────── */
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.mesh-base {
+  position: absolute;
+  inset: -20%;
+  width: 140%;
+  height: 140%;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 20%, rgba(200,184,154,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 80% 80%, rgba(100,120,180,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 50% 50%, rgba(200,184,154,0.03) 0%, transparent 70%);
+  animation: meshDrift 28s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+[data-theme="light"] .mesh-base {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 20%, rgba(90,74,53,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 80% 80%, rgba(60,80,120,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 50% 50%, rgba(90,74,53,0.04) 0%, transparent 70%);
+}
+
+@keyframes meshDrift {
+  0%   { transform: translate(0,0) rotate(0deg) scale(1); }
+  33%  { transform: translate(2%,3%) rotate(1deg) scale(1.02); }
+  66%  { transform: translate(-2%,1%) rotate(-0.5deg) scale(0.99); }
+  100% { transform: translate(1%,-2%) rotate(0.8deg) scale(1.01); }
+}
+
+.mesh-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px;
+}
+
+/* ─── GEOMETRIC SHARDS ───────────────────────────────────────────── */
+.shards-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  perspective: 1200px;
+  perspective-origin: 50% 50%;
+}
+
+.shard {
+  position: absolute;
+  will-change: transform;
+  animation-timeline: scroll(root block);
+  animation-fill-mode: both;
+  animation-timing-function: linear;
+  animation-duration: 1s;
+}
+
+/* Shard 1 – large, back plane, slow parallax */
+.shard-1 {
+  top: 12%;
+  left: -8%;
+  width: clamp(260px, 30vw, 460px);
+  height: clamp(260px, 30vw, 460px);
+  background: var(--shard-1);
+  border: 1px solid rgba(200,184,154,0.08);
+  transform: rotate(34deg) rotateY(-18deg) rotateX(8deg);
+  border-radius: 6px;
+  animation-name: shardScroll1;
+}
+
+@keyframes shardScroll1 {
+  from { transform: rotate(34deg) rotateY(-18deg) rotateX(8deg) translateY(0px); }
+  to   { transform: rotate(34deg) rotateY(-18deg) rotateX(8deg) translateY(-120px); }
+}
+
+/* Shard 2 – mid-size, right side, mid plane */
+.shard-2 {
+  top: 40%;
+  right: -5%;
+  width: clamp(180px, 20vw, 320px);
+  height: clamp(180px, 20vw, 320px);
+  background: var(--shard-2);
+  border: 1px solid rgba(100,120,180,0.10);
+  transform: rotate(-22deg) rotateX(14deg) rotateY(12deg);
+  border-radius: 4px;
+  animation-name: shardScroll2;
+}
+
+@keyframes shardScroll2 {
+  from { transform: rotate(-22deg) rotateX(14deg) rotateY(12deg) translateY(0px); }
+  to   { transform: rotate(-22deg) rotateX(14deg) rotateY(12deg) translateY(-220px); }
+}
+
+/* Shard 3 – small, foreground, fast parallax */
+.shard-3 {
+  bottom: 15%;
+  left: 8%;
+  width: clamp(90px, 10vw, 160px);
+  height: clamp(90px, 10vw, 160px);
+  background: var(--shard-3);
+  border: 1px solid rgba(237,237,237,0.07);
+  transform: rotate(60deg) rotateX(-20deg);
+  border-radius: 3px;
+  animation-name: shardScroll3;
+}
+
+@keyframes shardScroll3 {
+  from { transform: rotate(60deg) rotateX(-20deg) translateY(0px); }
+  to   { transform: rotate(60deg) rotateX(-20deg) translateY(-340px); }
+}
+
+/* ─── LAYOUT WRAPPER ─────────────────────────────────────────────── */
+.site-wrapper {
+  position: relative;
+  z-index: 2;
+}
+
+/* ─── HEADER ─────────────────────────────────────────────────────── */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(1.5rem, 4vw, 3.5rem);
+  height: 72px;
+  background: linear-gradient(to bottom, var(--bg) 0%, transparent 100%);
+  transition: background var(--dur-ui) var(--easing),
+              border-color var(--dur-ui) var(--easing);
+}
+
+header.scrolled {
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+}
+
+.logo-mark {
+  width: 40px;
+  height: 40px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.logo-mark::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--accent) 0%, transparent 55%);
+  opacity: 0.25;
+}
+
+.logo-mark::after {
+  content: 'HG';
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  position: relative;
+  z-index: 1;
+}
+
+.brand-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: var(--t-sm);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+/* Theme Toggle */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 5px 14px 5px 9px;
+  cursor: pointer;
+  transition: background var(--dur-ui) var(--easing),
+              border-color var(--dur-ui) var(--easing),
+              color var(--dur-ui) var(--easing);
+  color: var(--text-muted);
+  font-family: 'Inter', sans-serif;
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.theme-toggle:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.toggle-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.toggle-icon::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: currentColor;
+  clip-path: inset(0 50% 0 0);
+  transition: clip-path var(--dur-ui) var(--easing);
+}
+
+[data-theme="light"] .toggle-icon::before { clip-path: inset(0 0% 0 0); }
+
+/* ─── SECTIONS SHARED ────────────────────────────────────────────── */
+section {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 120px clamp(1.5rem, 6vw, 6rem);
+  position: relative;
+}
+
+/* ─── INTERSECTION OBSERVER REVEAL ──────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.6s var(--easing),
+              transform 0.6s var(--easing);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.reveal-delay-1 { transition-delay: 0.08s; }
+.reveal-delay-2 { transition-delay: 0.16s; }
+.reveal-delay-3 { transition-delay: 0.24s; }
+.reveal-delay-4 { transition-delay: 0.32s; }
+
+/* ─── HERO SECTION ───────────────────────────────────────────────── */
+#hero {
+  align-items: center;
+  text-align: center;
+  gap: 2rem;
+}
+
+.hero-label {
+  font-size: var(--t-xs);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hero-label::before,
+.hero-label::after {
+  content: '';
+  display: block;
+  width: 32px;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.5;
+}
+
+.hero-h1 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: var(--t-hero);
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  max-width: 14ch;
+  position: relative;
+  display: inline-block;
+
+  /* CSS shine effect */
+  background: linear-gradient(
+    110deg,
+    var(--text-primary) 0%,
+    var(--text-primary) 35%,
+    var(--shine) 50%,
+    var(--text-primary) 65%,
+    var(--text-primary) 100%
+  );
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: textShine 8s ease-in-out infinite;
+}
+
+@keyframes textShine {
+  0%   { background-position: 200% center; }
+  40%  { background-position: -100% center; }
+  100% { background-position: -100% center; }
+}
+
+.hero-sub {
+  font-size: var(--t-md);
+  color: var(--text-muted);
+  font-weight: 300;
+  max-width: 42ch;
+  line-height: 1.55;
+}
+
+.hero-cta {
+  margin-top: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Syne', sans-serif;
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 12px 28px;
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  transition: color var(--dur-ui) var(--easing);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-ui) var(--easing);
+}
+
+.hero-cta:hover::before { transform: scaleX(1); }
+.hero-cta:hover { color: var(--bg); }
+.hero-cta span { position: relative; z-index: 1; }
+
+/* Scroll indicator */
+.scroll-hint {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: var(--t-xs);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.scroll-line {
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(to bottom, var(--accent), transparent);
+  animation: scrollPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.3; transform: scaleY(0.6) translateY(-4px); }
+  50%       { opacity: 1;   transform: scaleY(1)   translateY(0); }
+}
+
+/* ─── ECOSYSTEM SECTION ──────────────────────────────────────────── */
+#ecosystem {
+  gap: 4rem;
+}
+
+.section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.section-label {
+  font-size: var(--t-xs);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 400;
+}
+
+.section-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: var(--t-2xl);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  max-width: 20ch;
+}
+
+.section-desc {
+  font-size: var(--t-base);
+  color: var(--text-muted);
+  max-width: 52ch;
+  margin-top: 0.25rem;
+}
+
+/* 2x2 Grid */
+.subsidiaries-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(0.75rem, 1.5vw, 1.25rem);
+}
+
+@media (max-width: 640px) {
+  .subsidiaries-grid { grid-template-columns: 1fr; }
+}
+
+.sub-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: clamp(1.5rem, 3vw, 2.25rem);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+  transition: transform 0.2s var(--easing),
+              border-color 0.2s var(--easing),
+              box-shadow 0.2s var(--easing);
+  will-change: transform;
+}
+
+.sub-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 0% 0%, var(--accent-dim), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.2s var(--easing);
+}
+
+.sub-card:hover {
+  transform: scale(1.02);
+  border-color: rgba(200,184,154,0.25);
+  box-shadow: 0 12px 48px rgba(0,0,0,0.25);
+}
+
+[data-theme="light"] .sub-card:hover {
+  box-shadow: 0 12px 48px rgba(0,0,0,0.10);
+}
+
+.sub-card:hover::before { opacity: 1; }
+
+.card-index {
+  font-family: 'Syne', sans-serif;
+  font-size: var(--t-xs);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.18em;
+  margin-bottom: 1.5rem;
+  opacity: 0.7;
+}
+
+.card-category {
+  font-size: var(--t-xs);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.card-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: var(--t-lg);
+  line-height: 1.15;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  margin-bottom: 0.85rem;
+}
+
+.card-desc {
+  font-size: var(--t-sm);
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.card-line {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(to right, var(--accent), transparent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s var(--easing);
+}
+
+.sub-card:hover .card-line { transform: scaleX(1); }
+
+/* ─── FOOTER SECTION ─────────────────────────────────────────────── */
+#footer-section {
+  min-height: 60svh;
+  justify-content: flex-end;
+  padding-bottom: clamp(2.5rem, 5vw, 4.5rem);
+  gap: 0;
+  border-top: 1px solid var(--border);
+}
+
+.footer-top {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.footer-wordmark {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: var(--t-hero);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  opacity: 0.06;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.footer-bottom {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  border-top: 1px solid var(--border);
+  padding-top: 2.5rem;
+}
+
+@media (max-width: 540px) {
+  .footer-bottom { grid-template-columns: 1fr; gap: 1.5rem; }
+  .footer-col:not(:last-child) { border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 clamp(0.5rem, 2vw, 1.5rem);
+}
+
+.footer-col:first-child { padding-left: 0; }
+.footer-col:last-child  { padding-right: 0; }
+
+.footer-col-label {
+  font-size: var(--t-xs);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.footer-link {
+  font-family: 'Syne', sans-serif;
+  font-size: var(--t-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color var(--dur-ui) var(--easing),
+              gap var(--dur-ui) var(--easing);
+}
+
+.footer-link::after {
+  content: 'arr';
+  font-size: 0.75em;
+  opacity: 0;
+  transition: opacity var(--dur-ui) var(--easing);
+  /* Replace text with unicode arrow */
+  speak: none;
+}
+
+.footer-link:hover {
+  color: var(--accent);
+  gap: 12px;
+}
+
+.footer-link:hover::after { opacity: 1; }
+
+.footer-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--t-xs);
+  letter-spacing: 0.06em;
+}
+</style>
+</head>
+<body>
+
+<!-- ─── ENVIRONMENT LAYERS ─────────────────────────── -->
+<div class="bg-layer" aria-hidden="true">
+  <div class="mesh-base"></div>
+  <div class="mesh-noise"></div>
+</div>
+
+<div class="shards-layer" aria-hidden="true">
+  <div class="shard shard-1"></div>
+  <div class="shard shard-2"></div>
+  <div class="shard shard-3"></div>
+</div>
+
+<!-- ─── SITE WRAPPER ───────────────────────────────── -->
+<div class="site-wrapper">
+
+  <!-- HEADER -->
+  <header id="site-header">
+    <a href="#" class="header-brand" aria-label="Hassan Group Limited homepage">
+      <div class="logo-mark" role="img" aria-label="HG Logo"></div>
+      <span class="brand-name">Hassan Group Ltd</span>
+    </a>
+
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle colour theme">
+      <div class="toggle-icon" aria-hidden="true"></div>
+      <span id="toggleLabel" aria-hidden="true">Dark</span>
+    </button>
+  </header>
+
+  <!-- ══════════════════════════════════════════════
+       SECTION 1 · HERO
+  ══════════════════════════════════════════════ -->
+  <section id="hero" aria-label="Hero">
+    <p class="hero-label reveal">Holding Group</p>
+
+    <h1 class="hero-h1 reveal reveal-delay-1">
+      Capital.<br>Strategy.<br>Vision.
+    </h1>
+
+    <p class="hero-sub reveal reveal-delay-2">
+      A sovereign holding group operating across technology, intelligence,
+      media, and information&nbsp;infrastructure.
+    </p>
+
+    <a href="#ecosystem" class="hero-cta reveal reveal-delay-3">
+      <span>Explore Ecosystem</span>
+    </a>
+
+    <div class="scroll-hint" aria-hidden="true">
+      <div class="scroll-line"></div>
+      <span>Scroll</span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       SECTION 2 · ECOSYSTEM
+  ══════════════════════════════════════════════ -->
+  <section id="ecosystem" aria-label="Subsidiaries">
+    <div class="section-header">
+      <span class="section-label reveal">Portfolio</span>
+      <h2 class="section-title reveal reveal-delay-1">Our Ecosystem</h2>
+      <p class="section-desc reveal reveal-delay-2">
+        Four distinct verticals. One integrated strategic vision.
+      </p>
+    </div>
+
+    <div class="subsidiaries-grid">
+
+      <article class="sub-card reveal reveal-delay-1">
+        <div class="card-index">01</div>
+        <p class="card-category">Technology</p>
+        <h3 class="card-name">Blunov Technology International</h3>
+        <p class="card-desc">Engineering next-generation software infrastructure and scalable digital systems for global enterprise environments.</p>
+        <div class="card-line" aria-hidden="true"></div>
+      </article>
+
+      <article class="sub-card reveal reveal-delay-2">
+        <div class="card-index">02</div>
+        <p class="card-category">Creative</p>
+        <h3 class="card-name">Blunov Studios</h3>
+        <p class="card-desc">A full-spectrum creative studio producing branded content, motion design, and immersive narrative experiences.</p>
+        <div class="card-line" aria-hidden="true"></div>
+      </article>
+
+      <article class="sub-card reveal reveal-delay-3">
+        <div class="card-index">03</div>
+        <p class="card-category">Intelligence</p>
+        <h3 class="card-name">Vanguard Intelligence And Tactical Limited</h3>
+        <p class="card-desc">Delivering precision intelligence, strategic advisory, and operational security solutions across complex environments.</p>
+        <div class="card-line" aria-hidden="true"></div>
+      </article>
+
+      <article class="sub-card reveal reveal-delay-4">
+        <div class="card-index">04</div>
+        <p class="card-category">Media</p>
+        <h3 class="card-name">Vanguard Daily</h3>
+        <p class="card-desc">An independent information platform curating verified intelligence and insight at the intersection of commerce and&nbsp;power.</p>
+        <div class="card-line" aria-hidden="true"></div>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════
+       SECTION 3 · TERMINAL FOOTER
+  ══════════════════════════════════════════════ -->
+  <section id="footer-section" aria-label="Contact and links">
+
+    <div class="footer-top reveal" aria-hidden="true">
+      <div class="footer-wordmark">HASSAN GROUP</div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="footer-col reveal">
+        <span class="footer-col-label">Email</span>
+        <a href="mailto:contact@hassangroup.com" class="footer-link">
+          contact@hassangroup.com
+        </a>
+      </div>
+
+      <div class="footer-col reveal reveal-delay-1">
+        <span class="footer-col-label">Instagram</span>
+        <a href="https://instagram.com/hassangroupltd" target="_blank" rel="noopener noreferrer" class="footer-link">
+          @hassangroupltd
+        </a>
+      </div>
+
+      <div class="footer-col reveal reveal-delay-2">
+        <span class="footer-col-label">X (Twitter)</span>
+        <a href="https://x.com/hassangroupltd" target="_blank" rel="noopener noreferrer" class="footer-link">
+          @hassangroupltd
+        </a>
+      </div>
+    </div>
+
+    <div class="footer-meta reveal">
+      <span>&copy; 2025 Hassan Group Limited. All rights reserved.</span>
+      <span>Incorporated under the laws of England &amp; Wales.</span>
+    </div>
+  </section>
+
+</div><!-- /site-wrapper -->
+
+
+<!-- ─── JS: THEME TOGGLE + INTERSECTIONOBSERVER ───── -->
+<script>
+(function () {
+  'use strict';
+
+  /* ── Theme ─────────────────────────────────── */
+  var html       = document.documentElement;
+  var toggle     = document.getElementById('themeToggle');
+  var label      = document.getElementById('toggleLabel');
+  var STORE_KEY  = 'hgl-theme';
+
+  function applyTheme(theme) {
+    html.setAttribute('data-theme', theme);
+    label.textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
+    try { localStorage.setItem(STORE_KEY, theme); } catch(e) {}
+  }
+
+  var saved = null;
+  try { saved = localStorage.getItem(STORE_KEY); } catch(e) {}
+  if (saved === 'light' || saved === 'dark') {
+    applyTheme(saved);
+  } else {
+    applyTheme(window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  }
+
+  toggle.addEventListener('click', function () {
+    applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  /* ── Header scroll state ────────────────────── */
+  var header  = document.getElementById('site-header');
+  var onScroll = function () {
+    header.classList.toggle('scrolled', window.scrollY > 24);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ── Reveal: IntersectionObserver (one-time) ── */
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
+}());
+</script>
+</body>
+</html>
